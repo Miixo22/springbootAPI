@@ -1,0 +1,55 @@
+
+git add .gitignore
+
+*.class
+*.jar
+*.war
+*.ear
+target/
+out/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Docker
+*.pid
+.env
+docker-compose.override.yml
+
+# Kubernetes
+*.crt
+*.key
+*.pem
+*.kube
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Node / Frontend (if any UI)
+node_modules/
+dist/
+
+# Monitoring / ELK
+es_data/
+logstash_data/
+grafana_data/
+prometheus_data/
+/openJdk-24/
+**/openJdk-24/

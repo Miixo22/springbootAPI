@@ -1,7 +1,5 @@
-package com.taskmanage;
+package com.taskmanage.Controller;
 
-//import com.taskmanage.model.Task;
-//import com.taskmanage.repository.TaskRepository;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +10,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.taskmanage.TaskRepo.TaskRepository;
+import com.taskmanage.tasklist.Task;                // <-- Adjust to your actual package
+
+import jakarta.annotation.PostConstruct;
 
 @RestController
 @RequestMapping("/tasks")
@@ -28,10 +31,9 @@ public class TaskController {
     }
 
     @GetMapping("/ping")
-    public String pingDatabase() {
-        return "Total tasks: " + taskRepository.count();
+    public String ping() {
+        return "pong";
     }
-
 
     @PostMapping
     public Task createTask(@RequestBody Task task) {
@@ -48,5 +50,10 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable Long id) {
         taskRepository.deleteById(id);
+    }
+
+    @PostConstruct
+    public void init() {
+        System.out.println("✅ TaskController initialized");
     }
 }

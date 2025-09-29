@@ -53,3 +53,9 @@ grafana_data/
 prometheus_data/
 /openJdk-24/
 **/openJdk-24/
+
+# .dockerignore
+target/
+.git/
+*.iml
+*.log

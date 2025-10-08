@@ -1,4 +1,4 @@
-package com.taskmanage.controller;
+package com.taskmanage.Controller;
 
 import java.util.List;
 
@@ -9,10 +9,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.taskmanage.model.Task;
 import com.taskmanage.repository.TaskRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,9 +34,12 @@ public class TaskController {
         this.taskRepository = taskRepository;
     }
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TaskController.class);
+
     @GetMapping
     @Operation(summary = "Get all tasks", description = "Returns a list of all tasks")
     public List<Task> getAllTasks() {
+        logger.info("Fetching all tasks");
         return taskRepository.findAll();
     }
 
@@ -56,6 +63,12 @@ public class TaskController {
             .orElseThrow(() -> new IllegalArgumentException("Task not found"));
         task.setCompleted(true);
         return taskRepository.save(task);
+    }
+
+    @GetMapping("/filter")
+    public List<Task> filterByStatus(@RequestParam boolean completed) {
+        logger.info("Filtering tasks by completed status.");
+        return taskRepository.findByCompleted(completed);
     }
 
     @DeleteMapping("/{id}")

@@ -2,12 +2,12 @@ package com.taskmanage.Controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,13 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.taskmanage.model.Task;
 import com.taskmanage.repository.TaskRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/tasks")
@@ -49,11 +45,20 @@ public class TaskController {
         return "pong";
     }
 
-    @PostMapping
-    @Valid
-    @Operation(summary = "Create a new task", description = "Adds a task to the database")
-    public Task createTask(@RequestBody Task task) {
-        return taskRepository.save(task);
+    // @PostMapping
+    // @Valid
+    // @Operation(summary = "Create a new task", description = "Adds a task to the database")
+    // public Task createTask(@RequestBody Task task) {
+    //     return taskRepository.save(task);
+    // }
+
+    @PostMapping("/createtask")
+    public ResponseEntity<Task> createTask(@RequestParam String title, @RequestParam String description) {
+        Task task = new Task();
+        task.setTitle(title);
+        task.setDescription(description);
+        Task savedTask = taskRepository.save(task);
+        return ResponseEntity.ok(savedTask);
     }
 
     @PutMapping("/{id}/complete")

@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy 
+name: Build, Test, and Deploy
 
 on:
   push:
@@ -7,10 +7,16 @@ on:
 env:
   IMAGE_NAME: miixo22/springbootapi-app
   CONTAINER_NAME: springboot-app
+  DB_CONTAINER_NAME: postgres-db
+  DB_IMAGE: postgres:15
+  DB_PORT: 5432
   APP_PORT: 8080
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: 123456
+  POSTGRES_DB: tasklistdb
 
 jobs:
-  # 1️⃣ Build and Test on GitHub-hosted runner
+  # 1️⃣ Build and Push on GitHub-hosted runner
   build_and_push:
     runs-on: ubuntu-latest
 
@@ -39,25 +45,44 @@ jobs:
           docker build -t $IMAGE_NAME:latest .
           docker push $IMAGE_NAME:latest
 
-  # 2️⃣ Deploy on your Ubuntu VM (self-hosted runner)
+  # 2️⃣ Deploy on Ubuntu VM (self-hosted runner)
   deploy:
     needs: build_and_push
     runs-on: self-hosted
+
     steps:
-      - name: Pull and run the container
+      - name: Log in to Docker
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Pull latest app image
+        run: docker pull $IMAGE_NAME:latest
+
+      - name: Start PostgreSQL container
         run: |
-          echo "Logging into Docker..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "Starting PostgreSQL container..."
+          docker stop $DB_CONTAINER_NAME || true
+          docker rm $DB_CONTAINER_NAME || true
 
-          echo "Pulling latest image..."
-          docker pull $IMAGE_NAME:latest
+          docker run -d \
+            --name $DB_CONTAINER_NAME \
+            -e POSTGRES_USER=$POSTGRES_USER \
+            -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+            -e POSTGRES_DB=$POSTGRES_DB \
+            -v pgdata:/var/lib/postgresql/data \
+            -p $DB_PORT:5432 \
+            $DB_IMAGE
 
-          echo "Stopping old container..."
+      - name: Start Spring Boot app container
+        run: |
+          echo "Starting application container..."
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
 
-          echo "Starting new container..."
           docker run -d \
             --name $CONTAINER_NAME \
-            -p 8080:8080 \
+            --link $DB_CONTAINER_NAME:db \
+            -p $APP_PORT:8080 \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/$POSTGRES_DB \
+            -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER \
+            -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD \
             $IMAGE_NAME:latest

@@ -39,8 +39,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t $IMAGE_NAME:latest .
-          docker push $IMAGE_NAME:latest
+          docker build -t miixo22/springbootapi-app:latest .
+          docker push miixo22/springbootapi-app:latest
 
   # 2️⃣ Deploy on Ubuntu VM (self-hosted runner)
   deploy:

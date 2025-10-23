@@ -31,14 +31,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Build and test with Maven
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:6001/tasklistdb
-          SPRING_DATASOURCE_USENAME: postgres
-          SPRING_DATASOURCE_PASSWORD: 123456
-        run: |
-          mvn clean test -Dspring-boot.run.arguments="--server.port=8080"
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -77,6 +69,14 @@ jobs:
             -p $DB_PORT:5432 \
             $DB_IMAGE
 
+      - name: Build and test with Maven
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:6001/tasklistdb
+          SPRING_DATASOURCE_USENAME: postgres
+          SPRING_DATASOURCE_PASSWORD: 123456
+        run: |
+          mvn clean test -Dspring-boot.run.arguments="--server.port=8080"
+          
       - name: Start Spring Boot app container
         run: |
           echo "Starting application container..."

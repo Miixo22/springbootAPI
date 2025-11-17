@@ -87,3 +87,14 @@ jobs:
             -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER \
             -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD \
             $IMAGE_NAME:latest
+
+      - name: Prepare deployment folder
+        run: |
+          if [ ! -d "$HOME/springbootAPI"]; then
+            echo "Folder ~/springbootAPI not found. Cloning fresh copy..."
+            git clone https://github.com/${{github.repository}} ~/springbootAPI
+          else
+            echo "Folder exists. Pulling latest changes..."
+            cd ~/springbootAPI
+            git pull origin main
+          fi

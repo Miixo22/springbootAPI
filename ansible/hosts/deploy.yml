@@ -1,0 +1,6 @@
+all:
+  children:
+    api_servers:
+      hosts:
+        5.16.188.46:
+          ansible_user: ubuntu

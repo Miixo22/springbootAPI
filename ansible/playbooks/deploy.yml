@@ -1,0 +1,44 @@
+---
+- name: Deploy Spring Boot Application
+  hosts: api_servers
+  become: true 
+  vars:
+    local_jar: "{{ lookup('env','LOCAL_JAR') | default('target/*.jar') }}"
+  tasks:
+    - name: Ensure application directory exists
+      file:
+        path: /opt/springboot-api
+        state: directory
+        mode: '0755'
+
+    - name: Ensure Java is installed
+      apt:
+        name: openjdk-21-jdk
+        state: present
+        update_cache: yes
+
+    - name: Copy application JAR to the server
+      copy:
+        src: "{{ local_jar }}"
+        dest: /opt/springboot-api/application.jar
+        mode: '0755'
+
+    - name: Start the Spring Boot application
+      shell: nohup java -jar /opt/springboot-api/application.jar > /var/log/springboot.log 2>&1 &
+      args:
+        chdir: /opt/springboot-api
+
+    - name: Ensure the application is running
+      uri:
+        url: http://localhost:8080/actuator/health
+        return_content: yes
+      register: health_check
+      retries: 5
+      delay: 10
+      until: health_check.status == 200
+
+    - name: Clean up old JAR files
+      file:
+        path: /opt/springboot-api/old_application.jar
+        state: absent
+      when: health_check.status == 200

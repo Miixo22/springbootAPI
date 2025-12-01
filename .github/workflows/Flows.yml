@@ -50,6 +50,14 @@ jobs:
       - name: Pull latest app image
         run: docker pull $IMAGE_NAME:latest
 
+      - name: Clean up previous containers
+        run: |
+          docker rm -f tasklistdb springboot-app ||true
+
+      - name: Create Docker network
+        run: |
+          docker network create spring_network || true
+
       - name: Start PostgreSQL container
         run: |
           echo "Starting PostgreSQL container..."

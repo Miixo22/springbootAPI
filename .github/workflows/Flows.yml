@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy 
+name: Build, Test, and Deploy
 
 on:
   push:
@@ -7,25 +7,29 @@ on:
 env:
   IMAGE_NAME: miixo22/springbootapi-app
   CONTAINER_NAME: springboot-app
+  DB_CONTAINER_NAME: postgres-db
+  DB_IMAGE: postgres:15
+  DB_PORT: 5432
   APP_PORT: 8080
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: 123456
+  POSTGRES_DB: tasklistdb
 
 jobs:
-  # 1️⃣ Build and Test on GitHub-hosted runner
+  # 1️⃣ Build and Push on GitHub-hosted runner
   build_and_push:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build and test with Maven
-        run: mvn clean verify
+          java-version: '21'
+          cache: 'maven'
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -33,30 +37,72 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t $IMAGE_NAME:latest .
-          docker push $IMAGE_NAME:latest
 
-  # 2️⃣ Deploy on your Ubuntu VM (self-hosted runner)
+  # 2️⃣ Deploy on Ubuntu VM (self-hosted runner)
   deploy:
     needs: build_and_push
     runs-on: self-hosted
+
     steps:
-      - name: Pull and run the container
+      - name: Log in to Docker
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Pull latest app image
+        run: docker pull $IMAGE_NAME:latest
+
+      - name: Clean up previous containers
         run: |
-          echo "Logging into Docker..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker rm -f tasklistdb springboot-app ||true
 
-          echo "Pulling latest image..."
-          docker pull $IMAGE_NAME:latest
+      - name: Create Docker network
+        run: |
+          docker network create spring_network || true
 
-          echo "Stopping old container..."
+      - name: Start PostgreSQL container
+        run: |
+          echo "Starting PostgreSQL container..."
+          docker stop $DB_CONTAINER_NAME || true
+          docker rm $DB_CONTAINER_NAME || true
+
+          docker run -d \
+            --name $DB_CONTAINER_NAME \
+            -e POSTGRES_USER=$POSTGRES_USER \
+            -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+            -e POSTGRES_DB=$POSTGRES_DB \
+            -v pgdata:/var/lib/postgresql/data \
+            -p $DB_PORT:5432 \
+            $DB_IMAGE
+
+      - name: Build and test with Maven
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:6001/tasklistdb
+          SPRING_DATASOURCE_USENAME: postgres
+          SPRING_DATASOURCE_PASSWORD: 123456
+        run: |
+          mvn clean package -DskipTests
+          
+      - name: Start Spring Boot app container
+        run: |
+          echo "Starting application container..."
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
 
-          echo "Starting new container..."
           docker run -d \
             --name $CONTAINER_NAME \
-            -p 8080:8080 \
+            --link $DB_CONTAINER_NAME:db \
+            -p $APP_PORT:8080 \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/$POSTGRES_DB \
+            -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER \
+            -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD \
             $IMAGE_NAME:latest
+
+      - name: Prepare deployment folder
+        run: |
+          if [ ! -d "$HOME/springbootAPI"]; then
+            echo "Folder ~/springbootAPI not found. Cloning fresh copy..."
+            git clone https://github.com/${{github.repository}} ~/springbootAPI
+          else
+            echo "Folder exists. Pulling latest changes..."
+            cd ~/springbootAPI
+            git pull origin main
+          fi

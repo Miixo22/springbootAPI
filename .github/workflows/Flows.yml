@@ -8,12 +8,12 @@ env:
   IMAGE_NAME: miixo22/springbootapi-app
   CONTAINER_NAME: springboot-app
   DB_CONTAINER_NAME: postgres-db
-  DB_IMAGE: postgres:15
+  DB_IMAGE: postgres:17
   DB_PORT: 5432
   APP_PORT: 8080
   POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: 123456
-  POSTGRES_DB: tasklistdb
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: taskdb
 
 jobs:
   # 1️⃣ Build and Push on GitHub-hosted runner
@@ -52,7 +52,7 @@ jobs:
 
       - name: Clean up previous containers
         run: |
-          docker rm -f tasklistdb springboot-app ||true
+          docker rm -f $DB_CONTAINER_NAME $CONTAINER_NAME ||true
 
       - name: Create Docker network
         run: |

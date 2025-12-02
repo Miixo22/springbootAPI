@@ -10,7 +10,7 @@ env:
   DB_CONTAINER_NAME: postgres-db
   DB_IMAGE: postgres:17
   DB_PORT: 5432
-  APP_PORT: 8080
+  APP_PORT: 8081
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres
   POSTGRES_DB: taskdb

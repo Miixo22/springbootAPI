@@ -1,4 +1,5 @@
 #!/bin/bash
+# ./free_ports.sh 
 
 # List of ports to check and free
 PORTS=("8080" "8083" "5432" "6001")

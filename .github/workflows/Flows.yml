@@ -57,7 +57,8 @@ jobs:
 
       - name: Start Kubernetes (kind)
         run: |
-          kind create cluster --name springboot || true
+          kind delete cluster --name springboot || true
+          kind create cluster --name springboot
           kubectl cluster-info --context kind-springboot --insecure-skip-tls-verify
 
       - name: Install Ansible

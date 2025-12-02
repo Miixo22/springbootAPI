@@ -61,9 +61,6 @@ jobs:
       - name: Start PostgreSQL container
         run: |
           echo "Starting PostgreSQL container..."
-          docker stop $DB_CONTAINER_NAME || true
-          docker rm $DB_CONTAINER_NAME || true
-
           docker run -d \
             --name $DB_CONTAINER_NAME \
             --network spring_network \
@@ -84,9 +81,6 @@ jobs:
       - name: Start Spring Boot app container
         run: |
           echo "Starting application container..."
-          docker stop $CONTAINER_NAME || true
-          docker rm $CONTAINER_NAME || true
-
           docker run -d \
             --name $CONTAINER_NAME \
             --network spring_network \
@@ -98,11 +92,4 @@ jobs:
 
       - name: Prepare deployment folder
         run: |
-          if [ ! -d "$HOME/springbootAPI"]; then
-            echo "Folder ~/springbootAPI not found. Cloning fresh copy..."
-            git clone https://github.com/${{github.repository}} ~/springbootAPI
-          else
-            echo "Folder exists. Pulling latest changes..."
-            cd ~/springbootAPI
-            git pull origin main
-          fi
+          echo "Deployment complete!"

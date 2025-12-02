@@ -66,21 +66,21 @@ jobs:
 
           docker run -d \
             --name $DB_CONTAINER_NAME \
+            --network spring_network \
             -e POSTGRES_USER=$POSTGRES_USER \
             -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
             -e POSTGRES_DB=$POSTGRES_DB \
             -v pgdata:/var/lib/postgresql/data \
-            -p $DB_PORT:5432 \
             $DB_IMAGE
 
       - name: Build and test with Maven
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:6001/tasklistdb
-          SPRING_DATASOURCE_USENAME: postgres
-          SPRING_DATASOURCE_PASSWORD: 123456
+          SPRING_DATASOURCE_URL: jdbc:postgresql://$DB_CONTAINER_NAME:5432/$POSTGRES_DB
+          SPRING_DATASOURCE_USERNAME: $POSTGRES_USER
+          SPRING_DATASOURCE_PASSWORD: $POSTGRES_PASSWORD
         run: |
           mvn clean package -DskipTests
-          
+
       - name: Start Spring Boot app container
         run: |
           echo "Starting application container..."
@@ -89,9 +89,9 @@ jobs:
 
           docker run -d \
             --name $CONTAINER_NAME \
-            --link $DB_CONTAINER_NAME:db \
+            --network spring_network \
             -p $APP_PORT:8080 \
-            -e SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/$POSTGRES_DB \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://$DB_CONTAINER_NAME:5432/$POSTGRES_DB \
             -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER \
             -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD \
             $IMAGE_NAME:latest

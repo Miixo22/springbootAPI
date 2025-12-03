@@ -61,10 +61,11 @@ jobs:
           kind create cluster --name springboot
           kubectl cluster-info --context kind-springboot --insecure-skip-tls-verify
 
-      - name: Install Ansible
+      - name: Install Ansible (apt, non-interactive)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ansible
+          ansible --version
 
       - name: Write inventory
         run: |
